@@ -14,20 +14,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-/**
- * Handles loading of all individual mace .yml config files from /plugins/HammerMaces/maces/.
- * Copies default mace files from the plugin jar on first run.
- */
 public class MaceConfigManager {
 
     private final HammerMacesPlugin plugin;
     private final File macesFolder;
 
-    // maceId (filename without .yml) -> parsed MaceConfig
     private final Map<String, MaceConfig> loadedMaces = new HashMap<>();
+    private final Map<String, String> holderToMaceId  = new HashMap<>();
 
-    // holderName (lowercase) -> maceId, for fast lookup on join/events
-    private final Map<String, String> holderToMaceId = new HashMap<>();
+    // Add new default mace filenames here as you create them
+    private static final String[] DEFAULT_MACE_FILES = {
+        "hammer_of_poseidon.yml",
+        "hammer_of_the_larpers.yml"
+    };
 
     public MaceConfigManager(HammerMacesPlugin plugin) {
         this.plugin = plugin;
@@ -38,18 +37,13 @@ public class MaceConfigManager {
         loadedMaces.clear();
         holderToMaceId.clear();
 
-        // Create /maces/ directory if it doesn't exist
-        if (!macesFolder.exists()) {
-            macesFolder.mkdirs();
-        }
+        if (!macesFolder.exists()) macesFolder.mkdirs();
 
-        // Copy default mace files from the jar if not already present
         copyDefaultMaceFiles();
 
-        // Load every .yml in the /maces/ folder
         File[] files = macesFolder.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null || files.length == 0) {
-            plugin.getLogger().warning("No mace config files found in /maces/! Nothing to load.");
+            plugin.getLogger().warning("No mace config files found in /maces/!");
             return;
         }
 
@@ -69,13 +63,8 @@ public class MaceConfigManager {
         plugin.getLogger().info("Loaded " + loadedMaces.size() + " mace(s).");
     }
 
-    /**
-     * Copies all .yml files from the jar's /maces/ resource folder into the plugin data folder.
-     * Only copies if the file doesn't already exist (won't overwrite edits).
-     */
     private void copyDefaultMaceFiles() {
-        String[] defaultMaces = { "hammer_of_poseidon.yml" };
-        for (String fileName : defaultMaces) {
+        for (String fileName : DEFAULT_MACE_FILES) {
             File dest = new File(macesFolder, fileName);
             if (!dest.exists()) {
                 try (InputStream in = plugin.getResource("maces/" + fileName)) {
@@ -92,20 +81,8 @@ public class MaceConfigManager {
         }
     }
 
-    public MaceConfig getMaceConfig(String maceId) {
-        return loadedMaces.get(maceId);
-    }
-
-    public MaceConfig getMaceConfigByHolder(String playerName) {
-        String maceId = holderToMaceId.get(playerName.toLowerCase());
-        return maceId != null ? loadedMaces.get(maceId) : null;
-    }
-
-    public Collection<MaceConfig> getAllMaceConfigs() {
-        return loadedMaces.values();
-    }
-
-    public Collection<String> getAllMaceIds() {
-        return loadedMaces.keySet();
-    }
-}
+    public MaceConfig getMaceConfig(String maceId)          { return loadedMaces.get(maceId); }
+    public MaceConfig getMaceConfigByHolder(String name)    { return loadedMaces.get(holderToMaceId.get(name.toLowerCase())); }
+    public Collection<MaceConfig> getAllMaceConfigs()        { return loadedMaces.values(); }
+    public Collection<String> getAllMaceIds()                { return loadedMaces.keySet(); }
+            }
