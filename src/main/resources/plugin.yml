@@ -5,6 +5,7 @@ api-version: '1.21'
 description: Soulbound animated maces for your SMP
 authors: [ YourName ]
 website: ''
+depend: [ packetevents ]
 
 commands:
   givemace:
