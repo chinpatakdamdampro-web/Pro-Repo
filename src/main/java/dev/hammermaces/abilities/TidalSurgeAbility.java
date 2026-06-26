@@ -13,13 +13,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
-/**
- * Tidal Surge ability — Sneak + Swing
- * Forward cone knockback wave, applies Slowness to hit targets.
- */
 public class TidalSurgeAbility {
-
-    public static final String ID = "tidal_surge";
 
     private final HammerMacesPlugin plugin;
 
@@ -32,31 +26,30 @@ public class TidalSurgeAbility {
         Vector facing   = origin.getDirection().normalize();
         double halfAngle = Math.toRadians(cfg.getTidalSurgeConeAngle() / 2.0);
         double range     = cfg.getTidalSurgeRange();
+        boolean hitSomething = false;
 
         for (Entity entity : player.getWorld().getNearbyEntities(origin, range, range, range)) {
             if (entity.equals(player)) continue;
             if (!(entity instanceof LivingEntity target)) continue;
 
-            Vector toTarget = entity.getLocation().toVector().subtract(origin.toVector()).normalize();
+            Vector toTarget = entity.getLocation().toVector()
+                .subtract(origin.toVector()).normalize();
             if (facing.angle(toTarget) > halfAngle) continue;
 
-            Vector knockback = toTarget.multiply(cfg.getTidalSurgeKnockback()).add(new Vector(0, 0.4, 0));
-            target.setVelocity(knockback);
-
+            hitSomething = true;
+            target.setVelocity(toTarget.multiply(cfg.getTidalSurgeKnockback()).add(new Vector(0, 0.4, 0)));
             target.addPotionEffect(new PotionEffect(
-                PotionEffectType.SLOWNESS,
-                cfg.getTidalSurgeEffectDuration(),
-                cfg.getTidalSurgeSlownessLevel() - 1,
-                false, true, true
-            ));
+                PotionEffectType.SLOWNESS, cfg.getTidalSurgeEffectDuration(),
+                cfg.getTidalSurgeSlownessLevel() - 1, false, true, true));
         }
 
         spawnParticles(origin, facing, range);
+        origin.getWorld().playSound(origin, Sound.ITEM_BUCKET_EMPTY, 1.2f, 0.7f);
+        origin.getWorld().playSound(origin, Sound.ENTITY_ELDER_GUARDIAN_AMBIENT, 0.5f, 0.8f);
 
-        player.getWorld().playSound(origin, Sound.ITEM_BUCKET_EMPTY, 1.2f, 0.7f);
-        player.getWorld().playSound(origin, Sound.ENTITY_ELDER_GUARDIAN_AMBIENT, 0.5f, 0.8f);
-
-        String msg = plugin.getConfig().getString("messages.tidal-surge-fired", "&#1a1a6e🌊 Tidal Surge launched!");
+        String msg = hitSomething
+            ? "&#1a1a6e🌊 Tidal Surge launched!"
+            : "&#1a1a6e🌊 Tidal Surge — no targets in range.";
         player.sendMessage(GradientUtils.parseLore(msg));
     }
 

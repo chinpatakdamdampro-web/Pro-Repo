@@ -19,13 +19,14 @@ public class MaceConfigManager {
     private final HammerMacesPlugin plugin;
     private final File macesFolder;
 
-    private final Map<String, MaceConfig> loadedMaces = new HashMap<>();
-    private final Map<String, String> holderToMaceId  = new HashMap<>();
+    private final Map<String, MaceConfig> loadedMaces   = new HashMap<>();
+    private final Map<String, String> holderToMaceId    = new HashMap<>();
 
-    // Add new default mace filenames here as you create them
     private static final String[] DEFAULT_MACE_FILES = {
         "hammer_of_poseidon.yml",
-        "hammer_of_the_larpers.yml"
+        "hammer_of_the_larpers.yml",
+        "the_unannounced.yml",
+        "the_afterthought.yml"
     };
 
     public MaceConfigManager(HammerMacesPlugin plugin) {
@@ -51,16 +52,19 @@ public class MaceConfigManager {
             String maceId = file.getName().replace(".yml", "");
             try {
                 FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-                MaceConfig maceConfig = new MaceConfig(maceId, cfg);
-                loadedMaces.put(maceId, maceConfig);
-                holderToMaceId.put(maceConfig.getHolderName().toLowerCase(), maceId);
-                plugin.getLogger().info("Loaded mace: " + maceId + " → holder: " + maceConfig.getHolderName());
+                MaceConfig mc = new MaceConfig(maceId, cfg);
+                loadedMaces.put(maceId, mc);
+                // Only map holder → maceId if holder is set
+                if (!mc.getHolderName().equalsIgnoreCase("YourNameHere")) {
+                    holderToMaceId.put(mc.getHolderName().toLowerCase(), maceId);
+                }
+                plugin.getLogger().info("Loaded: " + maceId + " → holder: " + mc.getHolderName());
             } catch (Exception e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to load mace config: " + file.getName(), e);
             }
         }
 
-        plugin.getLogger().info("Loaded " + loadedMaces.size() + " mace(s).");
+        plugin.getLogger().info("Loaded " + loadedMaces.size() + " soulbound item(s).");
     }
 
     private void copyDefaultMaceFiles() {
@@ -71,18 +75,36 @@ public class MaceConfigManager {
                     if (in != null) {
                         try (OutputStream out = Files.newOutputStream(dest.toPath())) {
                             in.transferTo(out);
-                            plugin.getLogger().info("Generated default mace config: maces/" + fileName);
+                            plugin.getLogger().info("Generated default config: maces/" + fileName);
                         }
                     }
                 } catch (IOException e) {
-                    plugin.getLogger().log(Level.SEVERE, "Could not copy default mace config: " + fileName, e);
+                    plugin.getLogger().log(Level.SEVERE, "Could not copy: " + fileName, e);
                 }
             }
         }
     }
 
-    public MaceConfig getMaceConfig(String maceId)          { return loadedMaces.get(maceId); }
-    public MaceConfig getMaceConfigByHolder(String name)    { return loadedMaces.get(holderToMaceId.get(name.toLowerCase())); }
-    public Collection<MaceConfig> getAllMaceConfigs()        { return loadedMaces.values(); }
-    public Collection<String> getAllMaceIds()                { return loadedMaces.keySet(); }
-            }
+    /**
+     * Persists the quest-tier back to the mace's yml file so it survives restarts.
+     */
+    public void saveQuestTier(String maceId, int tier) {
+        File file = new File(macesFolder, maceId + ".yml");
+        if (!file.exists()) return;
+        try {
+            FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
+            cfg.set("quest-tier", tier);
+            cfg.save(file);
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Could not save quest-tier for " + maceId, e);
+        }
+    }
+
+    public MaceConfig getMaceConfig(String maceId)       { return loadedMaces.get(maceId); }
+    public MaceConfig getMaceConfigByHolder(String name) {
+        String id = holderToMaceId.get(name.toLowerCase());
+        return id != null ? loadedMaces.get(id) : null;
+    }
+    public Collection<MaceConfig> getAllMaceConfigs()     { return loadedMaces.values(); }
+    public Collection<String> getAllMaceIds()             { return loadedMaces.keySet(); }
+}

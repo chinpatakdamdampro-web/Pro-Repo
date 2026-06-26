@@ -4,8 +4,8 @@ main: dev.hammermaces.HammerMacesPlugin
 api-version: '1.21'
 description: Soulbound animated maces for your SMP
 authors: [ YourName ]
-website: ''
-depend: [ packetevents ]
+depend: [ packetevents, ParticleNativeAPI ]
+softdepend: [ PlaceholderAPI ]
 
 commands:
   givemace:
@@ -16,14 +16,17 @@ commands:
     description: Reload all mace configs
     usage: /macereload
     permission: hammermaces.reload
+  questdebug:
+    description: Debug quest progress for a player
+    usage: /questdebug <player>
+    permission: hammermaces.admin
 
 permissions:
   hammermaces.give:
-    description: Allows giving soulbound maces
     default: op
   hammermaces.reload:
-    description: Allows reloading mace configs
+    default: op
+  hammermaces.admin:
     default: op
   hammermaces.soulbound.bypass:
-    description: Bypass soulbound restrictions (admins)
     default: op

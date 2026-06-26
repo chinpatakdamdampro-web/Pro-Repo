@@ -10,10 +10,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
- * Runs a repeating task that updates the display name of every soulbound mace
- * in every online player's inventory with the current animation frame.
- *
- * The offset advances each tick, making the gradient shimmer across the name.
+ * Updates animated gradient names on all soulbound items in every player's inventory.
+ * Runs every N ticks as configured in config.yml.
  */
 public class AnimationManager {
 
@@ -21,7 +19,6 @@ public class AnimationManager {
     private BukkitTask task;
     private float offset = 0f;
 
-    // How fast the shimmer moves. Higher = faster wave.
     private static final float OFFSET_INCREMENT = 0.025f;
 
     public AnimationManager(HammerMacesPlugin plugin) {
@@ -45,34 +42,28 @@ public class AnimationManager {
     }
 
     public void stopAnimationTask() {
-        if (task != null && !task.isCancelled()) {
-            task.cancel();
-        }
+        if (task != null && !task.isCancelled()) task.cancel();
     }
 
     private void updateInventory(Player player) {
-        MaceManager maceManager = plugin.getMaceManager();
-        MaceConfigManager cfgManager = plugin.getMaceConfigManager();
+        MaceManager mm     = plugin.getMaceManager();
+        MaceConfigManager cm = plugin.getMaceConfigManager();
 
         for (ItemStack item : player.getInventory().getContents()) {
             if (item == null) continue;
-            if (!maceManager.isSoulboundMace(item)) continue;
+            if (!mm.isSoulboundMace(item)) continue;
 
-            String maceId = maceManager.getMaceType(item);
+            String maceId = mm.getMaceType(item);
             if (maceId == null) continue;
 
-            MaceConfig cfg = cfgManager.getMaceConfig(maceId);
+            MaceConfig cfg = cm.getMaceConfig(maceId);
             if (cfg == null) continue;
 
             ItemMeta meta = item.getItemMeta();
             if (meta == null) continue;
 
             Component animatedName = GradientUtils.buildAnimatedGradient(
-                cfg.getDisplayName(),
-                cfg.getGradientStart(),
-                cfg.getGradientEnd(),
-                offset
-            );
+                cfg.getDisplayName(), cfg.getGradientStart(), cfg.getGradientEnd(), offset);
 
             meta.displayName(animatedName);
             item.setItemMeta(meta);

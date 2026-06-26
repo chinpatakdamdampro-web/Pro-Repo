@@ -2,13 +2,19 @@ package dev.hammermaces;
 
 import dev.hammermaces.commands.GiveMaceCommand;
 import dev.hammermaces.commands.MaceReloadCommand;
+import dev.hammermaces.data.ParasoQuestData;
 import dev.hammermaces.listeners.MaceAbilityListener;
 import dev.hammermaces.listeners.MacePassiveListener;
 import dev.hammermaces.listeners.SoulboundListener;
+import dev.hammermaces.listeners.paraso.ChaosTaxListener;
+import dev.hammermaces.listeners.paraso.NauseaPassiveListener;
+import dev.hammermaces.listeners.paraso.QuestBiomeListener;
 import dev.hammermaces.managers.AnimationManager;
 import dev.hammermaces.managers.CooldownManager;
 import dev.hammermaces.managers.MaceConfigManager;
 import dev.hammermaces.managers.MaceManager;
+import dev.hammermaces.managers.paraso.ParasoQuestManager;
+import dev.hammermaces.managers.paraso.PresenceStackManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Objects;
@@ -18,10 +24,13 @@ public class HammerMacesPlugin extends JavaPlugin {
 
     private static HammerMacesPlugin instance;
 
-    private MaceConfigManager maceConfigManager;
-    private MaceManager maceManager;
-    private AnimationManager animationManager;
-    private CooldownManager cooldownManager;
+    private MaceConfigManager   maceConfigManager;
+    private MaceManager         maceManager;
+    private AnimationManager    animationManager;
+    private CooldownManager     cooldownManager;
+    private ParasoQuestData     parasoQuestData;
+    private ParasoQuestManager  parasoQuestManager;
+    private PresenceStackManager presenceStackManager;
 
     @Override
     public void onEnable() {
@@ -29,38 +38,50 @@ public class HammerMacesPlugin extends JavaPlugin {
 
         saveDefaultConfig();
 
-        // Load all mace configs from /maces/ folder
+        // Core managers
         this.maceConfigManager = new MaceConfigManager(this);
         this.maceConfigManager.loadAll();
 
-        this.maceManager = new MaceManager(this);
+        this.maceManager      = new MaceManager(this);
+        this.cooldownManager  = new CooldownManager();
         this.animationManager = new AnimationManager(this);
-        this.cooldownManager = new CooldownManager();
 
-        // Register listeners
-        getServer().getPluginManager().registerEvents(new SoulboundListener(this), this);
-        getServer().getPluginManager().registerEvents(new MacePassiveListener(this), this);
-        getServer().getPluginManager().registerEvents(new MaceAbilityListener(this), this);
+        // Paraso systems
+        this.parasoQuestData     = new ParasoQuestData(this);
+        this.parasoQuestManager  = new ParasoQuestManager(this, parasoQuestData);
+        this.presenceStackManager = new PresenceStackManager(this);
+        this.presenceStackManager.start();
 
-        // Register commands
-        GiveMaceCommand giveMaceCmd = new GiveMaceCommand(this);
-        Objects.requireNonNull(getCommand("givemace")).setExecutor(giveMaceCmd);
-        Objects.requireNonNull(getCommand("givemace")).setTabCompleter(giveMaceCmd);
+        // Listeners
+        getServer().getPluginManager().registerEvents(new SoulboundListener(this),     this);
+        getServer().getPluginManager().registerEvents(new MacePassiveListener(this),   this);
+        getServer().getPluginManager().registerEvents(new MaceAbilityListener(this),   this);
+        getServer().getPluginManager().registerEvents(new ChaosTaxListener(this),      this);
+        getServer().getPluginManager().registerEvents(new NauseaPassiveListener(this), this);
+        getServer().getPluginManager().registerEvents(new QuestBiomeListener(this),    this);
+
+        // Commands
+        GiveMaceCommand giveCmd = new GiveMaceCommand(this);
+        Objects.requireNonNull(getCommand("givemace")).setExecutor(giveCmd);
+        Objects.requireNonNull(getCommand("givemace")).setTabCompleter(giveCmd);
 
         MaceReloadCommand reloadCmd = new MaceReloadCommand(this);
         Objects.requireNonNull(getCommand("macereload")).setExecutor(reloadCmd);
 
-        // Start animation task
+        // Start animation
         animationManager.startAnimationTask();
 
-        getLogger().info("HammerMaces enabled — your SMP just got legendary.");
+        // Record today's login for quest 2
+        parasoQuestManager.onLogin();
+
+        getLogger().info("HammerMaces enabled.");
     }
 
     @Override
     public void onDisable() {
-        if (animationManager != null) {
-            animationManager.stopAnimationTask();
-        }
+        if (animationManager    != null) animationManager.stopAnimationTask();
+        if (presenceStackManager != null) presenceStackManager.stop();
+        if (parasoQuestData     != null) parasoQuestData.save();
         getLogger().info("HammerMaces disabled.");
     }
 
@@ -69,12 +90,16 @@ public class HammerMacesPlugin extends JavaPlugin {
         if (animationManager != null) animationManager.stopAnimationTask();
         maceConfigManager.loadAll();
         animationManager.startAnimationTask();
-        getLogger().log(Level.INFO, "HammerMaces reloaded successfully.");
+        getLogger().log(Level.INFO, "HammerMaces reloaded.");
     }
 
-    public static HammerMacesPlugin getInstance() { return instance; }
-    public MaceConfigManager getMaceConfigManager() { return maceConfigManager; }
-    public MaceManager getMaceManager() { return maceManager; }
-    public AnimationManager getAnimationManager() { return animationManager; }
-    public CooldownManager getCooldownManager() { return cooldownManager; }
+    // ── Getters ───────────────────────────────────────────────────────────────
+    public static HammerMacesPlugin getInstance()          { return instance; }
+    public MaceConfigManager getMaceConfigManager()        { return maceConfigManager; }
+    public MaceManager getMaceManager()                    { return maceManager; }
+    public AnimationManager getAnimationManager()          { return animationManager; }
+    public CooldownManager getCooldownManager()            { return cooldownManager; }
+    public ParasoQuestData getParasoQuestData()            { return parasoQuestData; }
+    public ParasoQuestManager getParasoQuestManager()      { return parasoQuestManager; }
+    public PresenceStackManager getPresenceStackManager()  { return presenceStackManager; }
 }
