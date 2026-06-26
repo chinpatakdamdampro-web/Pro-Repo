@@ -1,0 +1,53 @@
+# ============================================================
+#         The First Draft — Architect's Soulbound Mace
+# ============================================================
+
+holder: "YourNameHere"
+
+display-name: "ᴛʜᴇ ꜰɪʀꜱᴛ ᴅʀᴀꜰᴛ"
+
+gradient-start: "#4A5568"
+gradient-end: "#CBD5E0"
+
+enchantments:
+  DENSITY: 5
+  BREACH: 4
+  WIND_BURST: 3
+
+abilities:
+  silent_read:
+    near-range: 8.0
+    far-range: 20.0
+    ping-interval: 10
+
+  calculated:
+    fracture-stacks-max: 3
+    bonus-1-debuff: 15
+    bonus-2-debuffs: 25
+    bonus-3-debuffs: 35
+    burst-missing-health-percent: 40
+
+  contingency:
+    cooldown: 120
+    window: 15
+    charges: 2
+    second-hit-cooldown-reduction: 0
+    execution-window-duration: 5
+    partial-refund-seconds: 60
+    teleport-distance: 6.0
+    blindness-duration: 60
+    slowness-duration: 100
+    absorption-duration: 160
+
+  predetermined:
+    cooldown: 45
+    radius: 5.0
+    duration: 12
+    speed-duration: 80
+
+  ground_slam:
+    enabled: true
+
+  infinity_slots:
+    enabled: true
+    slots: 3
