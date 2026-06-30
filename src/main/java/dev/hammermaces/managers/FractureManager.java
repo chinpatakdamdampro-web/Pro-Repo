@@ -72,7 +72,7 @@ public class FractureManager {
             String targetName = target instanceof org.bukkit.entity.Player p ? p.getName() : target.getName();
             holder.sendActionBar(net.kyori.adventure.text.Component.text(
                 "🧮 " + targetName + " " + buildFracturePips(newCount, maxStacks))
-                .color(org.bukkit.NamedTextColor.GRAY));
+                .color(net.kyori.adventure.text.format.NamedTextColor.GRAY));
         }
     }
 
@@ -101,7 +101,7 @@ public class FractureManager {
         String targetName = target instanceof org.bukkit.entity.Player p ? p.getName() : target.getName();
         holder.sendActionBar(net.kyori.adventure.text.Component.text(
             "🧮 Fracture — " + targetName + " (+" + String.format("%.1f", bonusDamage) + " dmg)")
-            .color(org.bukkit.NamedTextColor.DARK_AQUA));
+            .color(net.kyori.adventure.text.format.NamedTextColor.DARK_AQUA));
     }
 
     public void setExecutionWindow(UUID holderUUID, boolean active) {

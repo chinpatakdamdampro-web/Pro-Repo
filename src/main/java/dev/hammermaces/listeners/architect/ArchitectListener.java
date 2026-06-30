@@ -75,7 +75,7 @@ public class ArchitectListener implements Listener {
             plugin.getParticleEffects().fractureBurst(target.getLocation());
             scheduleChargedSmash(holder, cfg);
             holder.sendActionBar(net.kyori.adventure.text.Component.text("⚡ Charged Smash fired — +3 damage")
-                .color(org.bukkit.NamedTextColor.YELLOW));
+                .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
         }
 
         // Calculated — fracture stacks
@@ -104,7 +104,7 @@ public class ArchitectListener implements Listener {
         if (reg.hasSlotted(holder, Material.NETHERITE_SCRAP)) {
             event.setDamage(event.getDamage() * 0.9);
             holder.sendActionBar(net.kyori.adventure.text.Component.text("🛡 Scrap absorbed 10% damage")
-                .color(org.bukkit.NamedTextColor.GRAY));
+                .color(net.kyori.adventure.text.format.NamedTextColor.GRAY));
         }
 
         // Fermented Spider Eye — attacker gets Blindness
@@ -112,14 +112,14 @@ public class ArchitectListener implements Listener {
                 && reg.hasSlotted(holder, Material.FERMENTED_SPIDER_EYE)) {
             attacker.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, true, true));
             holder.sendActionBar(net.kyori.adventure.text.Component.text("🕸 Attacker blinded")
-                .color(org.bukkit.NamedTextColor.DARK_PURPLE));
+                .color(net.kyori.adventure.text.format.NamedTextColor.DARK_PURPLE));
         }
 
         // Ender Pearl — 20% dodge
         if (reg.hasSlotted(holder, Material.ENDER_PEARL) && Math.random() < 0.20) {
             event.setCancelled(true);
             holder.sendActionBar(net.kyori.adventure.text.Component.text("✦ Dodged — Ender Pearl")
-                .color(org.bukkit.NamedTextColor.LIGHT_PURPLE));
+                .color(net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE));
             return;
         }
 

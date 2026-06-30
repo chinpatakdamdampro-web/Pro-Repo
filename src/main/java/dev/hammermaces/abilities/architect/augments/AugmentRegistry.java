@@ -128,22 +128,22 @@ public class AugmentRegistry {
 
     private void sendSlotMessage(Player player, String itemName, String effect) {
         player.sendMessage(net.kyori.adventure.text.Component.text("[ ")
-            .color(org.bukkit.NamedTextColor.DARK_GRAY)
+            .color(net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY)
             .append(net.kyori.adventure.text.Component.text(itemName)
-                .color(org.bukkit.NamedTextColor.AQUA))
+                .color(net.kyori.adventure.text.format.NamedTextColor.AQUA))
             .append(net.kyori.adventure.text.Component.text(" ] ")
-                .color(org.bukkit.NamedTextColor.DARK_GRAY))
+                .color(net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY))
             .append(net.kyori.adventure.text.Component.text(effect)
-                .color(org.bukkit.NamedTextColor.GRAY)));
+                .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)));
     }
 
     private void sendUnslotMessage(Player player, String itemName) {
         player.sendMessage(net.kyori.adventure.text.Component.text("[ ")
-            .color(org.bukkit.NamedTextColor.DARK_GRAY)
+            .color(net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY)
             .append(net.kyori.adventure.text.Component.text(itemName)
-                .color(org.bukkit.NamedTextColor.AQUA))
+                .color(net.kyori.adventure.text.format.NamedTextColor.AQUA))
             .append(net.kyori.adventure.text.Component.text(" ] removed")
-                .color(org.bukkit.NamedTextColor.DARK_GRAY)));
+                .color(net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY)));
     }
 
     private String formatName(Material mat) {
