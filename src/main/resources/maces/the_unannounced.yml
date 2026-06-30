@@ -1,0 +1,50 @@
+# ============================================================
+#         The Unannounced — Paraso's Soulbound Mace
+# ============================================================
+
+holder: "YourNameHere"
+
+display-name: "ᴛʜᴇ ᴜɴᴀɴɴᴏᴜɴᴄᴇᴅ"
+
+gradient-start: "#F5F0E8"
+gradient-end: "#C8A96E"
+
+enchantments:
+  DENSITY: 5
+  BREACH: 4
+  WIND_BURST: 3
+
+quest-tier: 1
+
+abilities:
+  dash:
+    cooldown: 8
+    velocity: 1.8
+
+  absent:
+    stack-interval: 180
+    max-stacks: 5
+
+  chaos_tax:
+    proc-chance: 15
+
+  unannounced:
+    enabled: true
+    cooldown: 20
+    # Search radius to find nearest player
+    radius: 12.0
+    # How long target is frozen in seconds
+    freeze-duration: 10
+    # Window in seconds for Paraso to land a hit
+    hit-window: 10
+    # Saturation level on successful hit
+    saturation-level: 255
+    # Saturation duration in ticks (200 = 10 seconds)
+    saturation-duration: 200
+
+  just_showed_up:
+    enabled: true
+    cooldown: 45
+    min-stacks: 3
+    radius: 6.0
+    effect-duration: 80
