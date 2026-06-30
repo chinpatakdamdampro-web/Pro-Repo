@@ -1,0 +1,17 @@
+# ============================================================
+#   Paraso Quest Progress — Auto-managed by the plugin
+# ============================================================
+
+current-tier: 0
+
+progress:
+  biomes-visited: []
+  # Quest 2 — The Fusion
+  blaze-rods-collected: 0
+  nautilus-collected: 0
+  # Quest 3
+  players-hit: []
+  # Quest 4
+  hold-time-seconds: 0
+  # Quest 5
+  just-showed-up-fired: false
