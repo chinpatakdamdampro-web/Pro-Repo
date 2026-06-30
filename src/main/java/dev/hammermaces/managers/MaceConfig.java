@@ -47,6 +47,22 @@ public class MaceConfig {
     private final boolean larperFreezeCombatImmunity;
     private final int larperFreezeCombatImmunityWindow;
 
+    // False Summon
+    private final boolean falseSummonEnabled;
+    private final int falseSummonCooldown;
+    private final double falseSummonRadius;
+    private final int falseSummonDecoyDuration;
+    private final int falseSummonInvisDuration;
+    private final int falseSummonSpeedDuration;
+    private final int falseSummonWeaknessDuration;
+
+    // Monologue
+    private final boolean monologueEnabled;
+    private final int monologueCooldown;
+    private final int monologueStrengthLevel;
+    private final int monologueDuration;
+    private final String monologueLine;
+
     // ── Paraso — The Unannounced ──────────────────────────────────────────────
     private final int dashCooldown;
     private final double dashVelocity;
@@ -142,6 +158,20 @@ public class MaceConfig {
         this.larperFreezeStrengthDuration     = cfg.getInt("abilities.larper_freeze.strength-duration", 400);
         this.larperFreezeCombatImmunity       = cfg.getBoolean("abilities.larper_freeze.combat-immunity", true);
         this.larperFreezeCombatImmunityWindow = cfg.getInt("abilities.larper_freeze.combat-immunity-window", 100);
+
+        this.falseSummonEnabled          = cfg.getBoolean("abilities.false_summon.enabled", true);
+        this.falseSummonCooldown         = cfg.getInt("abilities.false_summon.cooldown", 45);
+        this.falseSummonRadius           = cfg.getDouble("abilities.false_summon.radius", 5.0);
+        this.falseSummonDecoyDuration    = cfg.getInt("abilities.false_summon.decoy-duration", 100);
+        this.falseSummonInvisDuration    = cfg.getInt("abilities.false_summon.invis-duration", 80);
+        this.falseSummonSpeedDuration    = cfg.getInt("abilities.false_summon.speed-duration", 80);
+        this.falseSummonWeaknessDuration = cfg.getInt("abilities.false_summon.weakness-duration", 60);
+
+        this.monologueEnabled       = cfg.getBoolean("abilities.monologue.enabled", true);
+        this.monologueCooldown      = cfg.getInt("abilities.monologue.cooldown", 30);
+        this.monologueStrengthLevel = cfg.getInt("abilities.monologue.strength-level", 2);
+        this.monologueDuration      = cfg.getInt("abilities.monologue.duration", 100);
+        this.monologueLine          = cfg.getString("abilities.monologue.line", "«Encore.»");
 
         // Paraso
         this.dashCooldown            = cfg.getInt("abilities.dash.cooldown", 8);
@@ -239,6 +269,20 @@ public class MaceConfig {
     public int getLarperFreezeStrengthDuration()     { return larperFreezeStrengthDuration; }
     public boolean isLarperFreezeCombatImmunity()    { return larperFreezeCombatImmunity; }
     public int getLarperFreezeCombatImmunityWindow() { return larperFreezeCombatImmunityWindow; }
+
+    public boolean isFalseSummonEnabled()       { return falseSummonEnabled; }
+    public int getFalseSummonCooldown()         { return falseSummonCooldown; }
+    public double getFalseSummonRadius()        { return falseSummonRadius; }
+    public int getFalseSummonDecoyDuration()    { return falseSummonDecoyDuration; }
+    public int getFalseSummonInvisDuration()    { return falseSummonInvisDuration; }
+    public int getFalseSummonSpeedDuration()    { return falseSummonSpeedDuration; }
+    public int getFalseSummonWeaknessDuration() { return falseSummonWeaknessDuration; }
+
+    public boolean isMonologueEnabled()       { return monologueEnabled; }
+    public int getMonologueCooldown()         { return monologueCooldown; }
+    public int getMonologueStrengthLevel()    { return monologueStrengthLevel; }
+    public int getMonologueDuration()         { return monologueDuration; }
+    public String getMonologueLine()          { return monologueLine; }
 
     // Paraso
     public int getDashCooldown()               { return dashCooldown; }

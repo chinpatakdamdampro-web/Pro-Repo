@@ -168,6 +168,16 @@ public class MaceManager {
         l.add(activation("Shift + Jump", C_LARPER_ACT));
         l.add(empty());
 
+        l.add(ability("🎭", "FALSE SUMMON", "⟨" + cfg.getFalseSummonCooldown() + "s⟩", C_LARPER_NAME, C_LARPER_CD));
+        l.add(desc("Spawns a decoy and lets you reposition", C_LARPER_DESC));
+        l.add(activation("Shift + Swing", C_LARPER_ACT));
+        l.add(empty());
+
+        l.add(ability("⚜", "MONOLOGUE", "⟨" + cfg.getMonologueCooldown() + "s⟩", C_LARPER_NAME, C_LARPER_CD));
+        l.add(desc("Strikes a pose — strength and knockback immunity", C_LARPER_DESC));
+        l.add(activation("Shift + Shift", C_LARPER_ACT));
+        l.add(empty());
+
         l.add(footer("⚔", "#8B0000"));
         l.add(owner(ownerName, "#FF4444"));
         return l;

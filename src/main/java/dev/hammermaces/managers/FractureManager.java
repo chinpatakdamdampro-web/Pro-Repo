@@ -57,40 +57,51 @@ public class FractureManager {
                       int maxStacks, int missingHealthPercent) {
         UUID targetId = target.getUniqueId();
 
-        // Add stack — if already at max, burst fired already, reset
         int current = fractureStacks.getOrDefault(targetId, 0);
         int newCount = current + 1;
 
-        // Execution window bonus — doubles the fracture damage on burst
         boolean hasExecWindow = executionWindows.contains(holder.getUniqueId());
 
         if (newCount >= maxStacks) {
-            // Burst
             fractureStacks.put(targetId, 0);
             fireBurst(holder, target, event, missingHealthPercent, hasExecWindow);
             if (hasExecWindow) executionWindows.remove(holder.getUniqueId());
         } else {
             fractureStacks.put(targetId, newCount);
+            // Private progress indicator — only the holder sees this
+            String targetName = target instanceof org.bukkit.entity.Player p ? p.getName() : target.getName();
+            holder.sendActionBar(net.kyori.adventure.text.Component.text(
+                "🧮 " + targetName + " " + buildFracturePips(newCount, maxStacks))
+                .color(org.bukkit.NamedTextColor.GRAY));
         }
+    }
+
+    private String buildFracturePips(int current, int max) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i <= max; i++) sb.append(i <= current ? "●" : "○");
+        return sb.toString();
     }
 
     private void fireBurst(Player holder, LivingEntity target, EntityDamageByEntityEvent event,
                            int missingHealthPercent, boolean executionBonus) {
-        // Silent — no sound, no message
+        // Stays silent TO THE TARGET on purpose — they shouldn't know it's coming.
+        // The holder gets a private confirmation since they earned the setup.
         double maxHp = getMaxHealth(target);
         double missingHp = maxHp - target.getHealth();
         double bonusDamage = missingHp * (missingHealthPercent / 100.0);
         if (executionBonus) bonusDamage *= 2.0;
 
-        // Add bonus damage on top of the current hit
         event.setDamage(event.getDamage() + bonusDamage);
 
-        // Apply debuffs silently
         target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 2, false, false, false));
         target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2, false, false, false));
 
-        // Subtle particle burst — only visible, no sound
         plugin.getParticleEffects().fractureBurst(target.getLocation());
+
+        String targetName = target instanceof org.bukkit.entity.Player p ? p.getName() : target.getName();
+        holder.sendActionBar(net.kyori.adventure.text.Component.text(
+            "🧮 Fracture — " + targetName + " (+" + String.format("%.1f", bonusDamage) + " dmg)")
+            .color(org.bukkit.NamedTextColor.DARK_AQUA));
     }
 
     public void setExecutionWindow(UUID holderUUID, boolean active) {

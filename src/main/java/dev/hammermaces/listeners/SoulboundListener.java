@@ -45,7 +45,10 @@ public class SoulboundListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
-        if (player.hasPermission("hammermaces.soulbound.bypass")) return;
+        // NOTE: previously skipped this entire block for OP/bypass players, which
+        // caused the mace to drop normally on death while giveOwedItems() on next
+        // join would create a brand new copy — resulting in a duplicate soulbound
+        // item. Soulbound protection must apply unconditionally to prevent dupes.
 
         List<ItemStack> toReturn = new ArrayList<>();
         Iterator<ItemStack> it = event.getDrops().iterator();
@@ -154,6 +157,31 @@ public class SoulboundListener implements Listener {
             // Simulate mace smash by giving the player the MACE attack bonus
             // via a slight velocity push downward so vanilla mace hit detection fires
             player.setVelocity(player.getVelocity().setY(-0.5));
+        }
+    }
+
+    // ── 5. Legacy dupe cleanup — removes orphaned soulbound items on the ground ─
+
+    /**
+     * One-time safety net for servers that already have duplicate soulbound
+     * items sitting on the ground from before this fix. If a soulbound item
+     * spawns/exists in the world and its rightful owner already possesses
+     * a copy, this removes the extra. Does not touch chest-stored items —
+     * those need manual review since they could be legitimate intentional storage.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onItemSpawn(org.bukkit.event.entity.ItemSpawnEvent event) {
+        ItemStack stack = event.getEntity().getItemStack();
+        if (!maceManager.isSoulboundMace(stack)) return;
+
+        String owner = maceManager.getMaceOwner(stack);
+        if (owner == null) return;
+
+        Player ownerPlayer = plugin.getServer().getPlayerExact(owner);
+        if (ownerPlayer == null || !ownerPlayer.isOnline()) return;
+
+        if (alreadyHas(ownerPlayer, maceManager.getMaceType(stack))) {
+            event.getEntity().remove();
         }
     }
 }

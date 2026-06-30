@@ -4,7 +4,6 @@ import dev.hammermaces.HammerMacesPlugin;
 import dev.hammermaces.abilities.paraso.FusionAnimationTask;
 import dev.hammermaces.data.ParasoQuestData;
 import dev.hammermaces.managers.MaceConfig;
-import dev.hammermaces.managers.MaceManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -20,28 +19,22 @@ import org.bukkit.inventory.ItemStack;
 /**
  * Tracks Blaze Rod and Nautilus Shell collection for Paraso's Quest 2.
  *
- * Listens to:
- *   EntityPickupItemEvent — picking up from ground
- *   InventoryClickEvent   — moving from chest/container to inventory
- *
- * When both targets are met, consumes the items and starts FusionAnimationTask.
- * Items are consumed from inventory before animation plays.
+ * IMPORTANT: Only checks player identity against the configured holder name —
+ * does NOT require holding the mace, since items can be collected any time
+ * once tier 1 is reached.
  */
 public class QuestCollectionListener implements Listener {
 
     private final HammerMacesPlugin plugin;
-    private final MaceManager maceManager;
 
     public QuestCollectionListener(HammerMacesPlugin plugin) {
-        this.plugin      = plugin;
-        this.maceManager = plugin.getMaceManager();
+        this.plugin = plugin;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPickup(EntityPickupItemEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        if (!isParaso(player)) return;
-        if (plugin.getParasoQuestData().getCurrentTier() != 1) return;
+        if (!isCurrentParaso(player)) return;
 
         Material mat = event.getItem().getItemStack().getType();
         handleCollection(player, mat);
@@ -50,8 +43,7 @@ public class QuestCollectionListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!isParaso(player)) return;
-        if (plugin.getParasoQuestData().getCurrentTier() != 1) return;
+        if (!isCurrentParaso(player)) return;
 
         ItemStack cursor = event.getCursor();
         if (cursor == null) return;
@@ -73,7 +65,6 @@ public class QuestCollectionListener implements Listener {
             sendProgress(player, data);
         }
 
-        // Check if fusion is ready — delay 1 tick so item is in inventory first
         if (data.isFusionComplete()) {
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 if (!player.isOnline()) return;
@@ -86,11 +77,9 @@ public class QuestCollectionListener implements Listener {
         ParasoQuestData data = plugin.getParasoQuestData();
         if (!data.isFusionComplete()) return;
 
-        // Consume the items from inventory
         removeItems(player, Material.BLAZE_ROD, ParasoQuestData.BLAZE_RODS_REQUIRED);
         removeItems(player, Material.NAUTILUS_SHELL, ParasoQuestData.NAUTILUS_REQUIRED);
 
-        // Start animation — on complete advance quest
         new FusionAnimationTask(plugin, player, () -> {
             plugin.getParasoQuestManager().onFusionComplete(player);
         }).runTaskTimer(plugin, 0L, 1L);
@@ -126,8 +115,14 @@ public class QuestCollectionListener implements Listener {
         player.sendActionBar(msg);
     }
 
-    private boolean isParaso(Player player) {
+    /**
+     * Checks identity AND that tier is exactly 1 (quest 2 active).
+     * Does not require possessing the mace.
+     */
+    private boolean isCurrentParaso(Player player) {
         MaceConfig cfg = plugin.getMaceConfigManager().getMaceConfig("the_unannounced");
-        return cfg != null && cfg.getHolderName().equalsIgnoreCase(player.getName());
+        if (cfg == null) return false;
+        if (!cfg.getHolderName().equalsIgnoreCase(player.getName())) return false;
+        return cfg.getQuestTier() == 1;
     }
 }

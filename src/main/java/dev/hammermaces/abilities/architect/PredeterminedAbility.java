@@ -99,6 +99,13 @@ public class PredeterminedAbility {
                     }
                 }
 
+                // Persistent low-frequency ring pulse — every 10 ticks (0.5s),
+                // so the zone is actually visible for the full duration instead
+                // of only flashing once at activation.
+                if (ticks % 10 == 0) {
+                    plugin.getParticleEffects().predeterminedActivate(center, radius);
+                }
+
                 ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L);

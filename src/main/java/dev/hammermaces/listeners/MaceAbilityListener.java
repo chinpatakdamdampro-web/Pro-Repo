@@ -2,7 +2,9 @@ package dev.hammermaces.listeners;
 
 import dev.hammermaces.HammerMacesPlugin;
 import dev.hammermaces.abilities.ColdAuraAbility;
+import dev.hammermaces.abilities.FalseSummonAbility;
 import dev.hammermaces.abilities.LarperFreezeAbility;
+import dev.hammermaces.abilities.MonologueAbility;
 import dev.hammermaces.abilities.TidalSurgeAbility;
 import dev.hammermaces.abilities.architect.InfinitySlotAbility;
 import dev.hammermaces.abilities.architect.PredeterminedAbility;
@@ -52,6 +54,8 @@ public class MaceAbilityListener implements Listener {
     private final ColdAuraAbility coldAura;
     private final TidalSurgeAbility tidalSurge;
     private final LarperFreezeAbility larperFreeze;
+    private final FalseSummonAbility falseSummon;
+    private final MonologueAbility monologue;
     private final DashAbility dash;
     private final UnannouncedAbility unannounced;
     private final JustShowedUpAbility justShowedUp;
@@ -64,6 +68,10 @@ public class MaceAbilityListener implements Listener {
     private final Set<UUID> jumpFiredThisSneak         = new HashSet<>();
     private final Set<UUID> rclickFiredThisSneak       = new HashSet<>();
 
+    /** Last sneak-press timestamp per player, for Monologue double-tap detection. */
+    private final Map<UUID, Long> lastSneakPress = new HashMap<>();
+    private static final long DOUBLE_TAP_WINDOW_MS = 400L;
+
     public MaceAbilityListener(HammerMacesPlugin plugin) {
         this.plugin          = plugin;
         this.maceManager     = plugin.getMaceManager();
@@ -72,6 +80,8 @@ public class MaceAbilityListener implements Listener {
         this.coldAura       = new ColdAuraAbility(plugin);
         this.tidalSurge     = new TidalSurgeAbility(plugin);
         this.larperFreeze   = new LarperFreezeAbility(plugin);
+        this.falseSummon    = new FalseSummonAbility(plugin);
+        this.monologue      = new MonologueAbility(plugin);
         this.dash           = new DashAbility(plugin);
         this.unannounced    = new UnannouncedAbility(plugin);
         this.justShowedUp   = new JustShowedUpAbility(plugin);
@@ -92,6 +102,16 @@ public class MaceAbilityListener implements Listener {
             jumpFiredThisSneak.remove(uuid);
             rclickFiredThisSneak.remove(uuid);
             handleDash(event.getPlayer());
+
+            // Double-tap detection for Monologue
+            long now = System.currentTimeMillis();
+            Long last = lastSneakPress.get(uuid);
+            if (last != null && now - last <= DOUBLE_TAP_WINDOW_MS) {
+                lastSneakPress.remove(uuid); // consume so a 3rd tap doesn't chain-fire
+                handleMonologue(event.getPlayer());
+            } else {
+                lastSneakPress.put(uuid, now);
+            }
         }
     }
 
@@ -205,6 +225,10 @@ public class MaceAbilityListener implements Listener {
                 if (cfg.isTidalSurgeEnabled() && fire(player, maceId, "tidal_surge", cfg.getTidalSurgeCooldown()))
                     tidalSurge.fire(player, cfg);
             }
+            case "hammer_of_the_larpers" -> {
+                if (cfg.isFalseSummonEnabled() && fire(player, maceId, "false_summon", cfg.getFalseSummonCooldown()))
+                    falseSummon.fire(player, cfg);
+            }
             case "the_unannounced" -> {
                 if (cfg.isJustShowedUpEnabled() && cfg.getQuestTier() >= 5
                         && fire(player, maceId, "just_showed_up", cfg.getJustShowedUpCooldown()))
@@ -217,6 +241,17 @@ public class MaceAbilityListener implements Listener {
                     predetermined.fire(player, cfg, extraRadius);
             }
         }
+    }
+
+    private void handleMonologue(Player player) {
+        ItemStack held = heldSoulbound(player);
+        if (held == null) return;
+        String maceId = maceManager.getMaceType(held);
+        if (!"hammer_of_the_larpers".equals(maceId)) return;
+        MaceConfig cfg = plugin.getMaceConfigManager().getMaceConfig(maceId);
+        if (cfg == null || !cfg.isMonologueEnabled()) return;
+        if (fire(player, maceId, "monologue", cfg.getMonologueCooldown()))
+            monologue.fire(player, cfg);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

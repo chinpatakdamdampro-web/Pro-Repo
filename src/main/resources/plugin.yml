@@ -22,5 +22,3 @@ permissions:
     default: op
   hammermaces.reload:
     default: op
-  hammermaces.soulbound.bypass:
-    default: op

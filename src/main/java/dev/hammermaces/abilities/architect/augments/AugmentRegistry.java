@@ -46,35 +46,59 @@ public class AugmentRegistry {
         applied.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>()).put(slot, mat);
 
         if (isSpear(mat)) {
-            applyReach(player, getSpearReach(mat));
+            double reach = getSpearReach(mat);
+            applyReach(player, reach);
+            sendSlotMessage(player, formatName(mat), "+" + reach + " block reach");
             if (mat.name().equals("NETHERITE_SPEAR")) {
                 scheduleChargedSmash(player);
+                sendSlotMessage(player, "Charged Smash", "primed — charges every " + intervalSeconds() + "s");
             }
             return;
         }
 
         if (isSword(mat)) {
-            // Sword bonus applied at hit time via getSwordDamageBonus()
+            double bonus = switch (mat) {
+                case WOODEN_SWORD   -> 1.0;
+                case STONE_SWORD    -> 2.0;
+                case IRON_SWORD     -> 3.0;
+                case GOLDEN_SWORD   -> 2.0;
+                case DIAMOND_SWORD  -> 4.0;
+                case NETHERITE_SWORD -> 5.0;
+                default -> 0;
+            };
+            sendSlotMessage(player, formatName(mat), "+" + bonus + " attack damage");
             return;
         }
 
-        // Other augments
         switch (mat) {
-            case TURTLE_SCUTE ->
+            case TURTLE_SCUTE -> {
                 player.addPotionEffect(new PotionEffect(
                     PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 0, true, false, false));
-            case GOLDEN_APPLE ->
+                sendSlotMessage(player, "Turtle Scute", "Resistance I — permanent while slotted");
+            }
+            case GOLDEN_APPLE -> {
                 player.addPotionEffect(new PotionEffect(
                     PotionEffectType.REGENERATION, Integer.MAX_VALUE, 0, true, false, false));
-            case OBSIDIAN ->
+                sendSlotMessage(player, "Golden Apple", "Regeneration I — permanent while slotted");
+            }
+            case OBSIDIAN -> {
                 player.addPotionEffect(new PotionEffect(
                     PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 1, true, false, false));
-            case PHANTOM_MEMBRANE ->
+                sendSlotMessage(player, "Obsidian", "Resistance II — permanent while slotted");
+            }
+            case PHANTOM_MEMBRANE -> {
                 player.addPotionEffect(new PotionEffect(
                     PotionEffectType.SLOW_FALLING, Integer.MAX_VALUE, 0, true, false, false));
-            // BLAZE_ROD, ENDER_PEARL, FERMENTED_SPIDER_EYE,
-            // NETHERITE_SCRAP, NETHER_STAR, ECHO_SHARD,
-            // ELYTRA, TOTEM_OF_UNDYING — all handled at event time
+                sendSlotMessage(player, "Phantom Membrane", "Slow Falling — permanent while slotted");
+            }
+            case BLAZE_ROD -> sendSlotMessage(player, "Blaze Rod", "hits now apply Fire Aspect");
+            case ENDER_PEARL -> sendSlotMessage(player, "Ender Pearl", "20% chance to dodge incoming hits");
+            case NETHERITE_SCRAP -> sendSlotMessage(player, "Netherite Scrap", "-10% damage taken");
+            case FERMENTED_SPIDER_EYE -> sendSlotMessage(player, "Fermented Spider Eye", "attackers get Blindness on hit");
+            case ELYTRA -> sendSlotMessage(player, "Elytra", "jump while airborne for a glide burst");
+            case NETHER_STAR -> sendSlotMessage(player, "Nether Star", "Predetermined radius +" + netherStarRadius() + " blocks");
+            case ECHO_SHARD -> sendSlotMessage(player, "Echo Shard", "Silent Read range doubled");
+            case TOTEM_OF_UNDYING -> sendSlotMessage(player, "Totem of Undying", "consumed automatically on lethal damage");
             default -> {}
         }
     }
@@ -82,13 +106,65 @@ public class AugmentRegistry {
     public void revokeAll(Player player) {
         UUID uuid = player.getUniqueId();
         if (!applied.containsKey(uuid)) return;
-        applied.remove(uuid);
+        Map<Integer, Material> removed = applied.remove(uuid);
 
         removeReach(player);
         player.removePotionEffect(PotionEffectType.RESISTANCE);
         player.removePotionEffect(PotionEffectType.REGENERATION);
         player.removePotionEffect(PotionEffectType.SLOW_FALLING);
         player.removeMetadata("charged_smash_ready", plugin);
+
+        if (removed != null && !removed.isEmpty()) {
+            for (Material mat : removed.values()) {
+                sendUnslotMessage(player, formatName(mat));
+            }
+        }
+    }
+
+    // ── Private feedback helpers ─────────────────────────────────────────────
+    // Every slot/unslot is private to the wielder — no global broadcast.
+    // Only genuinely rare moments (Totem save, Just Showed Up max stacks,
+    // Fusion complete) get server-wide visibility elsewhere in the plugin.
+
+    private void sendSlotMessage(Player player, String itemName, String effect) {
+        player.sendMessage(net.kyori.adventure.text.Component.text("[ ")
+            .color(org.bukkit.NamedTextColor.DARK_GRAY)
+            .append(net.kyori.adventure.text.Component.text(itemName)
+                .color(org.bukkit.NamedTextColor.AQUA))
+            .append(net.kyori.adventure.text.Component.text(" ] ")
+                .color(org.bukkit.NamedTextColor.DARK_GRAY))
+            .append(net.kyori.adventure.text.Component.text(effect)
+                .color(org.bukkit.NamedTextColor.GRAY)));
+    }
+
+    private void sendUnslotMessage(Player player, String itemName) {
+        player.sendMessage(net.kyori.adventure.text.Component.text("[ ")
+            .color(org.bukkit.NamedTextColor.DARK_GRAY)
+            .append(net.kyori.adventure.text.Component.text(itemName)
+                .color(org.bukkit.NamedTextColor.AQUA))
+            .append(net.kyori.adventure.text.Component.text(" ] removed")
+                .color(org.bukkit.NamedTextColor.DARK_GRAY)));
+    }
+
+    private String formatName(Material mat) {
+        String[] parts = mat.name().split("_");
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            sb.append(Character.toUpperCase(part.charAt(0)))
+              .append(part.substring(1).toLowerCase())
+              .append(" ");
+        }
+        return sb.toString().trim();
+    }
+
+    private int intervalSeconds() {
+        MaceConfig cfg = plugin.getMaceConfigManager().getMaceConfig("the_first_draft");
+        return cfg != null ? cfg.getChargedSmashIntervalSeconds() : 60;
+    }
+
+    private double netherStarRadius() {
+        MaceConfig cfg = plugin.getMaceConfigManager().getMaceConfig("the_first_draft");
+        return cfg != null ? cfg.getNetherStarPredeterminedRadiusBonus() : 3.0;
     }
 
     // ── Reach ─────────────────────────────────────────────────────────────────
@@ -174,6 +250,13 @@ public class AugmentRegistry {
         Map<Integer, Material> slots = applied.get(player.getUniqueId());
         if (slots == null) return false;
         return slots.containsValue(mat);
+    }
+
+    /** Used by HudManager to decide whether to show the Charged Smash indicator at all. */
+    public boolean hasNetheriteSpearSlotted(Player player) {
+        Map<Integer, Material> slots = applied.get(player.getUniqueId());
+        if (slots == null) return false;
+        return slots.values().stream().anyMatch(m -> m.name().equals("NETHERITE_SPEAR"));
     }
 
     public double getNetherStarRadiusBonus(Player player) {

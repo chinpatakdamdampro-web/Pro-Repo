@@ -34,6 +34,10 @@ public class ParasoQuestManager {
 
     // ── Called from listeners ─────────────────────────────────────────────────
 
+    public void onLogin() {
+        // Login tracking removed in quest 2 rework — kept for API compatibility
+    }
+
     public void onBiomeEnter(String biomeName) {
         if (data.getCurrentTier() >= 1) return;
         data.addBiome(biomeName);
